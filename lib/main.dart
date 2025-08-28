@@ -67,7 +67,7 @@ class _MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     await BackgroundFetch.configure(
       BackgroundFetchConfig(
-        minimumFetchInterval: 15,
+        minimumFetchInterval: FeeProvider.refreshInterval * 60, // 这里使用配置的刷新间隔
         stopOnTerminate: false,
         enableHeadless: true,
         requiresBatteryNotLow: false,

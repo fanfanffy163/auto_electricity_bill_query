@@ -1,7 +1,9 @@
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
+import 'package:auto_electricity_bill_query/service/qrcode_scan_observer.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_scanner/mobile_scanner.dart' show BarcodeCapture;
 import 'package:provider/provider.dart';
 import 'utils/cache.dart';
 import 'utils/camera.dart';
@@ -11,10 +13,10 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  QrScanWidgetState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends QrScanWidgetState<SettingsScreen> {
   
   final TextEditingController _linkController = TextEditingController();
   late double _notificationThreshold;
@@ -26,6 +28,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _linkController.text = FeeProvider.feeUrl;
     _notificationThreshold = FeeProvider.notificationThreshold;
     _refreshInterval = FeeProvider.refreshInterval;
+  }
+
+  @override
+  void handleBarcode(BarcodeCapture barcode) {
+    debugPrint(barcode.barcodes.first.rawValue);
+    setState(() {
+      _linkController.text = barcode.barcodes.first.rawValue ?? '';
+    });
   }
 
   @override
@@ -79,7 +89,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     tmpList.add(IconButton(
               icon: const Icon(FontAwesomeIcons.camera, color: Colors.black54, size: 20),
-              onPressed: () { /* TODO: 实现相机扫描二维码 */ },
+              onPressed: () async {
+                await startQrScan();
+              },
             ));
     tmpList.add(IconButton(
               icon: const Icon(FontAwesomeIcons.image, color: Colors.black54, size: 20),

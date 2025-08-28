@@ -45,7 +45,7 @@ class BackgroundTaskService {
       final fee = FeeProvider.notificationThreshold;
       final bill = await BackgroundTaskService.refreshElectricityBill();
       if(bill != null) {
-        if(bill.fee <= 50){
+        if(bill.fee <= fee){
           final lastUpdated = bill.updateTime;
           final formattedTime = DateFormat('yyyy-MM-dd HH:mm').format(lastUpdated);
           await NotificationService().init(isHeadless: true); // 推荐这里手动调用
