@@ -13,16 +13,14 @@ abstract class QrScanWidgetState<T extends StatefulWidget> extends State<T> with
   StreamSubscription<Object?>? _subscription;
 
   @protected
-  void handleBarcode(BarcodeCapture barcode) {}
+  MobileScanner attachScanner(){
+    return MobileScanner(
+      controller: controller,
+    );
+  }
 
   @protected
-  Future<void> startQrScan() async {
-    try {
-      await controller.start();
-    } on Exception catch (e) {
-      debugPrint('无法启动相机: $e');
-    }
-  }
+  void handleBarcode(BarcodeCapture barcode) {}
 
   @override
   @mustCallSuper

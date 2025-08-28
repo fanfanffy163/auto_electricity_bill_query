@@ -1,5 +1,4 @@
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
-import 'package:auto_electricity_bill_query/service/qrcode_scan_observer.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -13,10 +12,10 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  QrScanWidgetState<SettingsScreen> createState() => _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends QrScanWidgetState<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> {
   
   final TextEditingController _linkController = TextEditingController();
   late double _notificationThreshold;
@@ -28,14 +27,6 @@ class _SettingsScreenState extends QrScanWidgetState<SettingsScreen> {
     _linkController.text = FeeProvider.feeUrl;
     _notificationThreshold = FeeProvider.notificationThreshold;
     _refreshInterval = FeeProvider.refreshInterval;
-  }
-
-  @override
-  void handleBarcode(BarcodeCapture barcode) {
-    debugPrint(barcode.barcodes.first.rawValue);
-    setState(() {
-      _linkController.text = barcode.barcodes.first.rawValue ?? '';
-    });
   }
 
   @override
@@ -90,7 +81,21 @@ class _SettingsScreenState extends QrScanWidgetState<SettingsScreen> {
     tmpList.add(IconButton(
               icon: const Icon(FontAwesomeIcons.camera, color: Colors.black54, size: 20),
               onPressed: () async {
-                await startQrScan();
+                final Object? text = await Navigator.pushNamed(context, '/scanQrCode');
+                if(!mounted) return;
+
+                if(text == null){
+                  Utils.showMessage(context, '读取二维码失败，请检查扫描图片');
+                  return;
+                }
+                _linkController.text = text as String;
+                final feeProvider = context.read<FeeProvider>();
+                final res = await feeProvider.refreshFee(url: _linkController.text);
+                if(!mounted) return;
+                if(res){
+                  Utils.showMessage(context, '电费已刷新！金额: ${feeProvider.currentFee} 元，采集时间: ${DateFormat('yyyy-MM-dd HH:mm').format(feeProvider.lastUpdated)}');
+                  CacheUtil.setString(FeeProvider.linkCacheKey, _linkController.text);
+                }
               },
             ));
     tmpList.add(IconButton(

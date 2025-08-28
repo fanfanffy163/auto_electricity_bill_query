@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:auto_electricity_bill_query/qrcode_scan_screen.dart';
 import 'package:auto_electricity_bill_query/exception/app_exception.dart';
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
 import 'package:auto_electricity_bill_query/service/background_service.dart';
@@ -104,6 +105,7 @@ class _MyAppState extends State<MyApp> {
       routes: {
         '/': (context) => const HomeScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/scanQrCode': (context) => const QRCodeScanScreen(),
       },
     );
   }
