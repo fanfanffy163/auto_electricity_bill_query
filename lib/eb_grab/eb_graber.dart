@@ -5,8 +5,13 @@ class EbData{
   EbData(this.fee, this.updateTime);
 }
 
-class AbstractEbGraber{
-  Future<EbData?> grab() async{
-    throw UnimplementedError(); 
-  }
+enum PayType{
+  alipay,
+  wechatpay,
+}
+
+abstract class AbstractEbGraber{
+  Future<EbData?> grab(String url);
+
+  Future<bool> chargeEb(String url, PayType type, double amount);
 }

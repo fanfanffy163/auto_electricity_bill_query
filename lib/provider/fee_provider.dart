@@ -29,6 +29,8 @@ class FeeProvider with ChangeNotifier {
   static int get refreshInterval => CacheUtil.getInt(_refreshIntervalCacheKey) ?? _defaultRefreshInterval;
   static String get feeUrl => CacheUtil.getString(_linkCacheKey) ?? "";
 
+  static final AbstractEbGraber graber = JjmzryHttpEbGraber();
+
   void updateFee({required double fee, required DateTime updateTime}) {
     _currentFee = fee;
     _lastUpdated = updateTime;
@@ -50,12 +52,23 @@ class FeeProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
 
+  Future<bool> chargeFee({required String url, required PayType type, required double amount}) async {
+    try {
+      bool success = await graber.chargeEb(url, type, amount);
+      if (!success) {
+        throw AppException('扣费失败，请稍后重试');
+      }
+      return true;
+    } catch (e) {
+      // 处理错误
+      throw AppException('扣费失败: $e');
+    }
   }
 
   static Future<EbData> fetchFeeFromUrl(String url) async {
-    AbstractEbGraber graber = JjmzryHttpEbGraber(url);
-    EbData? c = await  graber.grab();
+    EbData? c = await graber.grab(url);
     // 假设抓取到的电费数据
     if (c == null) {
       throw AppException('获取电费失败，请检查链接或网络连接');

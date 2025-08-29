@@ -2,7 +2,6 @@ import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_scanner/mobile_scanner.dart' show BarcodeCapture;
 import 'package:provider/provider.dart';
 import 'utils/cache.dart';
 import 'utils/camera.dart';
@@ -65,6 +64,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _refreshFeeWhileGet(Object? text) async{
+    if(!mounted) return;
+    if(text == null){
+      Utils.showMessage(context, '读取二维码失败，请检查扫描图片');
+      return;
+    }
+    _linkController.text = text as String;
+    final feeProvider = context.read<FeeProvider>();
+    final res = await feeProvider.refreshFee(url: _linkController.text);
+    if(!mounted) return;
+    if(res){
+      Utils.showMessage(context, '电费已刷新！金额: ${feeProvider.currentFee} 元，采集时间: ${DateFormat('yyyy-MM-dd HH:mm').format(feeProvider.lastUpdated)}');
+      CacheUtil.setString(FeeProvider.linkCacheKey, _linkController.text);
+    }
+    setState(() {
+      _linkController.text = _linkController.text;
+    });
+  }
+
   List<Widget> getIcons(){
     List<IconButton> tmpList = [];
     if(_linkController.text != ''){
@@ -82,40 +100,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: const Icon(FontAwesomeIcons.camera, color: Colors.black54, size: 20),
               onPressed: () async {
                 final Object? text = await Navigator.pushNamed(context, '/scanQrCode');
-                if(!mounted) return;
-
-                if(text == null){
-                  Utils.showMessage(context, '读取二维码失败，请检查扫描图片');
-                  return;
-                }
-                _linkController.text = text as String;
-                final feeProvider = context.read<FeeProvider>();
-                final res = await feeProvider.refreshFee(url: _linkController.text);
-                if(!mounted) return;
-                if(res){
-                  Utils.showMessage(context, '电费已刷新！金额: ${feeProvider.currentFee} 元，采集时间: ${DateFormat('yyyy-MM-dd HH:mm').format(feeProvider.lastUpdated)}');
-                  CacheUtil.setString(FeeProvider.linkCacheKey, _linkController.text);
-                }
+                await _refreshFeeWhileGet(text);
               },
             ));
     tmpList.add(IconButton(
               icon: const Icon(FontAwesomeIcons.image, color: Colors.black54, size: 20),
               onPressed: () async {
                 final String? text = await QrCodeScannerUtil.scanQrCodeFromGallery();
-                if(!mounted) return;
-
-                if(text == null){
-                  Utils.showMessage(context, '读取二维码失败，请检查选中图片');
-                  return;
-                }
-                _linkController.text = text;
-                final feeProvider = context.read<FeeProvider>();
-                final res = await feeProvider.refreshFee(url: text);
-                if(!mounted) return;
-                if(res){
-                  Utils.showMessage(context, '电费已刷新！金额: ${feeProvider.currentFee} 元，采集时间: ${DateFormat('yyyy-MM-dd HH:mm').format(feeProvider.lastUpdated)}');
-                  CacheUtil.setString(FeeProvider.linkCacheKey, _linkController.text);
-                }
+                await _refreshFeeWhileGet(text);
               },
             ));
     return tmpList;

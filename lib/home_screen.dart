@@ -1,3 +1,4 @@
+import 'package:auto_electricity_bill_query/eb_grab/eb_graber.dart';
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -126,13 +127,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPaymentButtons() {
+    final feeProvider = context.watch<FeeProvider>();
+
     return Row(
       children: [
         Expanded(
           child: ElevatedButton.icon(
             icon: SvgPicture.asset('assets/icons/wechat_pay.svg', height: 24),
             label: const Text('微信缴费', style: TextStyle(fontSize: 16)),
-            onPressed: () { /* TODO: 实现微信缴费逻辑 */ },
+            onPressed: () async {
+              await feeProvider.chargeFee(url: FeeProvider.feeUrl, type: PayType.wechatpay, amount: 1);
+            },
             style: _paymentButtonStyle(const Color(0xFF07C160)),
           ),
         ),
