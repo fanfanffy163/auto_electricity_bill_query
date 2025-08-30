@@ -9,8 +9,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 class JjmzryHttpEbGraber extends AbstractEbGraber{
 
-  Future<dynamic> queryGlobal(String url) async{
-    http.Response response = await http.get(Uri.parse(url));
+  Future<Map<String,dynamic>?> query(String url) async{
+    http.Response response = await http.get(Uri.parse(url), headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0'
+      });
     if (response.statusCode != 200) return null;
 
     final reg = RegExp(r'var GLOBAL\s*=\s*({.*?});', dotAll: true);
@@ -22,22 +24,24 @@ class JjmzryHttpEbGraber extends AbstractEbGraber{
 
     // 解析 JSON
     final global = json.decode(globalJsonStr);
-    return global;
+    final cookie = response.headers['set-cookie'];
+    return {"global" : global, "cookie": cookie ?? ''};
   }
 
   @override
   Future<EbData?> grab(String url) async {
-    final global = await queryGlobal(url);
-    return extractEb(global);
+    final queryRes = await query(url);
+    return extractEb(queryRes?['global']);
   }
 
   @override
   Future<bool> chargeEb(String url, PayType type, double amount) async {
-    final global = await queryGlobal(url);
-    return chargeExec(url,global, type, amount);
+    final queryRes = await query(url);
+    return chargeExec(url,queryRes, type, amount);
   }
 
-  bool chargeExec(String url, dynamic global, PayType type, double amount){
+  bool chargeExec(String url, Map<String,dynamic>? queryRes, PayType type, double amount){
+    final global = queryRes?['global'];
     if(global == null) return false;
 
     final payId = global['PAYREQUEST_URL'] as String?;
@@ -48,6 +52,7 @@ class JjmzryHttpEbGraber extends AbstractEbGraber{
     // 例如：
     if(type == PayType.alipay){
       // 调用支付宝扣费接口
+      alipay(domain + payId, amount, queryRes?['cookie']);
     } else if(type == PayType.wechatpay){
       // 调用微信扣费接口
       launchWithAppChooser(url);
@@ -86,6 +91,50 @@ class JjmzryHttpEbGraber extends AbstractEbGraber{
       return EbData(fee, collectTime); // 根据你的EbData结构调整
     }
     return null;
+  }
+
+  static Future<bool> alipay(String apiUrl, double amount, String cookie) async {
+    final api = Uri.parse(apiUrl);
+    final response = await http.post(api, body: {
+        'amount': amount.toString(),
+        'payType': "tq_alipay",
+        'confirm': '1'
+        // 其他必要的参数
+      }, headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'X-Requested-With': 'XMLHttpRequest',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0',
+        'Host': api.host,
+        'Connection': 'Keep-Alive',
+        'Origin': 'http://wx.tqdianbiao.com',
+        'Cookie': cookie
+      }
+    );
+    debugPrint('支付宝支付响应: ${response.body}');
+
+    // 解析JSON
+    Map<String, dynamic> info = json.decode(response.body);
+    
+    // 检查返回状态是否成功
+    if (info['status'] != 1 || info['state'] != 'success') {
+      return false;
+    }
+    
+    // 提取支付相关信息
+    Map<String, dynamic> data = info['info']['data'];
+    String payUrl = data['payUrl']; // 支付跳转链接
+    
+    // 检查支付链接是否有效
+    if (payUrl.isEmpty) {
+      return false;
+    }
+    
+    // 发起支付跳转
+    await launchWithAppChooser(payUrl);
+    // 支付宝支付
+    // 这里实现支付宝支付的逻辑
+    return true;
   }
 
   // 微信支付

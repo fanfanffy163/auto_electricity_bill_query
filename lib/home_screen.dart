@@ -1,3 +1,4 @@
+import 'package:auto_electricity_bill_query/dialog/amount_input.dart';
 import 'package:auto_electricity_bill_query/eb_grab/eb_graber.dart';
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
 import 'package:flutter/material.dart';
@@ -146,7 +147,23 @@ class _HomeScreenState extends State<HomeScreen> {
           child: ElevatedButton.icon(
             icon: SvgPicture.asset('assets/icons/alipay.svg', height: 24),
             label: const Text('支付宝缴费', style: TextStyle(fontSize: 16)),
-            onPressed: () { /* TODO: 实现支付宝缴费逻辑 */ },
+            onPressed: () async{ 
+              final newAmount = await showDialog<double>(
+                context: context,
+                builder: (BuildContext context) {
+                  // 使用通用的 AmountInputDialog
+                  return AmountInputDialog(
+                    title: '请输入需要充值的电费', // 传入自定义标题
+                    initialAmount: 0,
+                  );
+                },
+              );
+
+              if(newAmount == null || newAmount <= 0){
+                return;
+              }
+              await feeProvider.chargeFee(url: FeeProvider.feeUrl, type: PayType.alipay, amount: newAmount);
+            },
             style: _paymentButtonStyle(const Color(0xFF00A1FF)),
           ),
         ),
