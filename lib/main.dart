@@ -68,22 +68,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initPlatformState() async {
-    await BackgroundFetch.configure(
-      BackgroundFetchConfig(
-        minimumFetchInterval: FeeProvider.refreshInterval * 60, // 这里使用配置的刷新间隔
-        stopOnTerminate: false,
-        enableHeadless: true,
-        requiresBatteryNotLow: false,
-        requiresCharging: false,
-        requiresStorageNotLow: false,
-        requiresDeviceIdle: false,
-        requiredNetworkType: NetworkType.ANY, // 允许任何网络类型
-        // ... 其他配置
-      ),
-      // ✨ 使用你新定义的静态方法作为回调
-      BackgroundTaskService.onBackgroundFetch,
-      BackgroundTaskService.onBackgroundFetchTimeout
-    );
+    await BackgroundTaskService.init();
   }
 
   @override

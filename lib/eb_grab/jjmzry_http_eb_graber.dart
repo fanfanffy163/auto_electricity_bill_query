@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:auto_electricity_bill_query/eb_grab/eb_graber.dart';
-import 'package:auto_electricity_bill_query/exception/app_exception.dart';
 import 'package:auto_electricity_bill_query/utils/utils.dart';
 import 'package:flutter/rendering.dart';
 import 'package:http/http.dart' as http;

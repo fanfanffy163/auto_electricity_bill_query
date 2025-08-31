@@ -1,4 +1,5 @@
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
+import 'package:auto_electricity_bill_query/service/background_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -104,6 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               setState(() {
                 _notificationThreshold = value;
                 CacheUtil.setDouble(FeeProvider.notifyThresholdCacheKey, _notificationThreshold);
+                BackgroundTaskService.init();
               });
             },
           ),
@@ -130,6 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             setState(() {
               _refreshInterval = newValue!;
               CacheUtil.setInt(FeeProvider.refreshIntervalCacheKey, _refreshInterval);
+              BackgroundTaskService.init();
             });
           },
           underline: Container(),
@@ -162,6 +165,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _refreshInterval = FeeProvider.defaultRefreshInterval;
               CacheUtil.remove(FeeProvider.notifyThresholdCacheKey);
               CacheUtil.remove(FeeProvider.refreshIntervalCacheKey);
+              BackgroundTaskService.init();
             });
           },
           style: _resetButtonStyle(),

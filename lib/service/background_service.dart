@@ -25,6 +25,27 @@ class BackgroundTaskService {
     //execRefreshElectricityBill(taskId);
   }
 
+  static Future<void> init() async {
+    // 配置 BackgroundFetch
+    await BackgroundFetch.configure(
+      BackgroundFetchConfig(
+        minimumFetchInterval: 15,//FeeProvider.refreshInterval * 60, // 这里使用配置的刷新间隔
+        stopOnTerminate: false,
+        enableHeadless: true,
+        requiresBatteryNotLow: false,
+        requiresCharging: false,
+        requiresStorageNotLow: false,
+        requiresDeviceIdle: false,
+        requiredNetworkType: NetworkType.ANY, // 允许任何网络类型
+        // ... 其他配置
+      ),
+      // ✨ 使用你新定义的静态方法作为回调
+      BackgroundTaskService.onBackgroundFetch,
+      BackgroundTaskService.onBackgroundFetchTimeout
+    );
+    debugPrint("[BackgroundFetch] Configured with interval: ${FeeProvider.refreshInterval * 60} minutes");
+  }
+
   // 核心的刷新逻辑
   static Future<EbData?> refreshElectricityBill() async {
     final url = CacheUtil.getString(FeeProvider.linkCacheKey) ?? "";
