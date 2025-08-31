@@ -1,7 +1,6 @@
 // lib/services/notification_service.dart
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -18,7 +17,7 @@ class NotificationService {
     if (_isInit) return; // 如果已经初始化，则直接返回
 
     // Android 13+ 主动申请通知权限
-    if (!isHeadless && defaultTargetPlatform == TargetPlatform.android && WidgetsBinding.instance != null) {
+    if (!isHeadless && defaultTargetPlatform == TargetPlatform.android) {
       final status = await Permission.notification.request();
       debugPrint('通知权限状态: $status');
     }

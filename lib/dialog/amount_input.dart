@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// 一个通用的金额输入弹窗
-/// 包含一个输入框、取消和确认按钮。
 class AmountInputDialog extends StatefulWidget {
   final String title;
   final String hintText;
@@ -36,34 +34,72 @@ class _AmountInputDialogState extends State<AmountInputDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.title),
+      // 添加圆角和阴影
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      elevation: 10.0,
+      
+      // 标题
+      title: Text(
+        widget.title,
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+
+      // 内容
       content: TextField(
         controller: _controller,
         keyboardType: TextInputType.number,
         decoration: InputDecoration(
           hintText: widget.hintText,
+          // 添加边框
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          // 选中时的边框颜色
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2.0),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
         ),
       ),
+
+      // 按钮
       actions: <Widget>[
         TextButton(
-          child: const Text('取消'),
           onPressed: () {
-            // 返回 null 表示取消
             Navigator.of(context).pop();
           },
+          child: const Text(
+            '取消',
+            style: TextStyle(color: Colors.grey, fontSize: 16),
+          ),
         ),
-        TextButton(
-          child: const Text('确定'),
+        ElevatedButton(
           onPressed: () {
             try {
-              final newAmount = double.parse(_controller.text);
-              // 返回新金额
-              Navigator.of(context).pop(newAmount);
+              final newAmount = double.tryParse(_controller.text);
+              if (newAmount != null) {
+                Navigator.of(context).pop(newAmount);
+              } else {
+                Navigator.of(context).pop();
+              }
             } catch (e) {
-              // 输入无效，返回 null
               Navigator.of(context).pop();
             }
           },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+          ),
+          child: const Text(
+            '确定',
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
         ),
       ],
     );

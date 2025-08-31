@@ -54,7 +54,7 @@ class FeeProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> chargeFee({required String url, required PayType type, required double amount}) async {
+  static Future<bool> chargeFee({required String url, required PayType type, required double amount}) async {
     try {
       bool success = await graber.chargeEb(url, type, amount);
       if (!success) {

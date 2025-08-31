@@ -64,88 +64,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _refreshFeeWhileGet(Object? text) async{
-    if(!mounted) return;
-    if(text == null){
-      Utils.showMessage(context, '读取二维码失败，请检查扫描图片');
-      return;
-    }
-    _linkController.text = text as String;
-    final feeProvider = context.read<FeeProvider>();
-    final res = await feeProvider.refreshFee(url: _linkController.text);
-    if(!mounted) return;
-    if(res){
-      Utils.showMessage(context, '电费已刷新！金额: ${feeProvider.currentFee} 元，采集时间: ${DateFormat('yyyy-MM-dd HH:mm').format(feeProvider.lastUpdated)}');
-      CacheUtil.setString(FeeProvider.linkCacheKey, _linkController.text);
-    }
-    setState(() {
-      _linkController.text = _linkController.text;
-    });
-  }
-
-  List<Widget> getIcons(){
-    List<IconButton> tmpList = [];
-    if(_linkController.text != ''){
-      tmpList.add(IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: () {
-                setState(() {
-                  _linkController.clear(); // 清空输入框
-                  CacheUtil.setString(FeeProvider.linkCacheKey, _linkController.text);
-                });  
-              }
-            ));
-    }
-    tmpList.add(IconButton(
-              icon: const Icon(FontAwesomeIcons.camera, color: Colors.black54, size: 20),
-              onPressed: () async {
-                final Object? text = await Navigator.pushNamed(context, '/scanQrCode');
-                await _refreshFeeWhileGet(text);
-              },
-            ));
-    tmpList.add(IconButton(
-              icon: const Icon(FontAwesomeIcons.image, color: Colors.black54, size: 20),
-              onPressed: () async {
-                final String? text = await QrCodeScannerUtil.scanQrCodeFromGallery();
-                await _refreshFeeWhileGet(text);
-              },
-            ));
-    return tmpList;
-  }
-
   Widget _buildLinkInput() {
-    return TextField(
-      controller: _linkController,
-      maxLines: 3,
-      keyboardType: TextInputType.url, // Set keyboard type to url
-      textInputAction: TextInputAction.done, // Change action to 'Done'
-      decoration: InputDecoration(
-        hintText: '输入或扫描二维码获取链接',
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        suffixIcon: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ...getIcons(),
-            const SizedBox(width: 8),
-          ],
-        ),
-      ),
-      onChanged: (str){
-        setState(() {
-          CacheUtil.setString(FeeProvider.linkCacheKey, _linkController.text);
-        });
-      },
-      // onSubmitted: (value) {
-      //   // Unfocus the keyboard when the user submits
-      //   FocusScope.of(context).unfocus();
-      // },
-    );
+    return FeeLink(linkController: _linkController);
   }
 
   Widget _buildRuleSettingsCard() {
@@ -173,12 +93,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const Expanded(child: Text('提醒阈值 (元)')),
         Text('${_notificationThreshold.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
         SizedBox(
-          width: 150,
+          width: 120,
           child: Slider(
             value: _notificationThreshold,
-            min: 1,
+            min: 0,
             max: 30,
-            divisions: 15,
+            divisions: 10,
             label: _notificationThreshold.round().toString(),
             onChanged: (double value) {
               setState(() {
@@ -258,6 +178,106 @@ class _SettingsScreenState extends State<SettingsScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+    );
+  }
+}
+
+class FeeLink extends StatefulWidget {
+  const FeeLink({
+    super.key,
+    required TextEditingController linkController,
+  }) : _linkController = linkController;
+
+  final TextEditingController _linkController;
+
+  @override
+  State<FeeLink> createState() => _FeeLinkState();
+}
+
+class _FeeLinkState extends State<FeeLink> {
+
+  Future<void> _refreshFeeWhileGet(Object? text) async{
+    if(!mounted) return;
+    if(text == null){
+      Utils.showMessage(context, '读取二维码失败，请检查扫描图片');
+      return;
+    }
+    widget._linkController.text = text as String;
+    final feeProvider = context.read<FeeProvider>();
+    final res = await feeProvider.refreshFee(url: widget._linkController.text);
+    if(!mounted) return;
+    if(res){
+      Utils.showMessage(context, '电费已刷新！金额: ${feeProvider.currentFee} 元，采集时间: ${DateFormat('yyyy-MM-dd HH:mm').format(feeProvider.lastUpdated)}');
+      CacheUtil.setString(FeeProvider.linkCacheKey, widget._linkController.text);
+    }
+    setState(() {
+      widget._linkController.text = widget._linkController.text;
+    });
+  }
+
+  List<Widget> getIcons(){
+    List<IconButton> tmpList = [];
+    if(widget._linkController.text != ''){
+      tmpList.add(IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () {
+                setState(() {
+                  widget._linkController.clear(); // 清空输入框
+                  CacheUtil.setString(FeeProvider.linkCacheKey, widget._linkController.text);
+                });  
+              }
+            ));
+    }
+    tmpList.add(IconButton(
+              icon: const Icon(FontAwesomeIcons.camera, color: Colors.black54, size: 20),
+              onPressed: () async {
+                final Object? text = await Navigator.pushNamed(context, '/scanQrCode');
+                await _refreshFeeWhileGet(text);
+              },
+            ));
+    tmpList.add(IconButton(
+              icon: const Icon(FontAwesomeIcons.image, color: Colors.black54, size: 20),
+              onPressed: () async {
+                final String? text = await QrCodeScannerUtil.scanQrCodeFromGallery();
+                await _refreshFeeWhileGet(text);
+              },
+            ));
+    return tmpList;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: widget._linkController,
+      maxLines: 3,
+      keyboardType: TextInputType.url, // Set keyboard type to url
+      textInputAction: TextInputAction.done, // Change action to 'Done'
+      decoration: InputDecoration(
+        hintText: '输入或扫描二维码获取链接',
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ...getIcons(),
+            const SizedBox(width: 8),
+          ],
+        ),
+      ),
+      onChanged: (str){
+        setState(() {
+          CacheUtil.setString(FeeProvider.linkCacheKey, widget._linkController.text);
+        });
+      },
+      // onSubmitted: (value) {
+      //   // Unfocus the keyboard when the user submits
+      //   FocusScope.of(context).unfocus();
+      // },
     );
   }
 }

@@ -21,16 +21,18 @@ void main() async{
     FlutterError.presentError(details);
   };
 
-  WidgetsFlutterBinding.ensureInitialized();
-  NotificationService().init(); // 推荐这里手动调用
-  BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
-  
-  await CacheUtil.init(); // 在这里进行初始化
-  runZonedGuarded(() {
-    runApp(ChangeNotifierProvider(
-      create: (_) => FeeProvider(),
-      child: MyApp(),
-    ),);
+  runZonedGuarded<Future<void>>(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    NotificationService().init(); // 推荐这里手动调用
+    BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
+    await CacheUtil.init(); // 在这里进行初始化
+
+    runApp(
+      ChangeNotifierProvider(
+        create: (_) => FeeProvider(),
+        child: MyApp(),
+      ),
+    );
   }, (error, stack) {
     _handleError(error, stack);
   });
@@ -87,6 +89,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey, // 🌟 关键改动在这里
       title: '电费监控',
       theme: ThemeData(
         primarySwatch: Colors.blue,

@@ -15,31 +15,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
-  void _refreshFee() async{
-    final url = FeeProvider.feeUrl;
-    if (url.isEmpty) {
-      Utils.showMessage(context, '缴费链接为空');
-      return;
-    }
-    final feeProvider = context.read<FeeProvider>();
-    await feeProvider.refreshFee(url: url);
-    if (!mounted) {
-      // 如果 Widget 已经不在树中，直接返回，不做任何操作
-      return;
-    }
-    Utils.showMessage(context, '电费已刷新！金额: ${feeProvider.currentFee} 元，采集时间: ${DateFormat('yyyy-MM-dd HH:mm').format(feeProvider.lastUpdated)}');
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // 页面渲染后再刷新，避免 context 问题
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshFee();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,8 +43,109 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFeeDisplayCard() {
-    final feeProvider = context.watch<FeeProvider>();
+    return Consumer<FeeProvider>(
+      builder: (context, feeProvider, child) {
+        return FeeDisplayer(feeProvider: feeProvider,);
+      },
+    );
+  }
+  
 
+  Widget _buildPaymentButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            icon: SvgPicture.asset('assets/icons/wechat_pay.svg', height: 24),
+            label: const Text('微信缴费', style: TextStyle(fontSize: 16)),
+            onPressed: () async {
+              await FeeProvider.chargeFee(url: FeeProvider.feeUrl, type: PayType.wechatpay, amount: 1);
+            },
+            style: _paymentButtonStyle(const Color(0xFF07C160)),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton.icon(
+            icon: SvgPicture.asset('assets/icons/alipay.svg', height: 24),
+            label: const Text('支付宝缴费', style: TextStyle(fontSize: 16)),
+            onPressed: () async{ 
+              final newAmount = await showDialog<double>(
+                context: context,
+                builder: (BuildContext context) {
+                  // 使用通用的 AmountInputDialog
+                  return AmountInputDialog(
+                    title: '请输入需要充值的电费', // 传入自定义标题
+                    initialAmount: 0,
+                  );
+                },
+              );
+
+              if(newAmount == null || newAmount <= 0){
+                return;
+              }
+              await FeeProvider.chargeFee(url: FeeProvider.feeUrl, type: PayType.alipay, amount: newAmount);
+            },
+            style: _paymentButtonStyle(const Color(0xFF00A1FF)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  ButtonStyle _paymentButtonStyle(Color backgroundColor) {
+    return ElevatedButton.styleFrom(
+      backgroundColor: backgroundColor,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      elevation: 2,
+    );
+  }
+}
+
+class FeeDisplayer extends StatefulWidget {
+  const FeeDisplayer({
+    super.key,
+    required this.feeProvider,
+  });
+
+  final FeeProvider feeProvider;
+
+  @override
+  State<FeeDisplayer> createState() => _FeeDisplayerState();
+}
+
+class _FeeDisplayerState extends State<FeeDisplayer> {
+  @override
+  void initState() {
+    super.initState();
+    // 页面渲染后再刷新，避免 context 问题
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshFee();
+    });
+  }
+
+  void _refreshFee() async{
+    final url = FeeProvider.feeUrl;
+    if (url.isEmpty) {
+      Utils.showMessage(context, '缴费链接为空');
+      return;
+    }
+    final feeProvider = context.read<FeeProvider>();
+    await feeProvider.refreshFee(url: url);
+    if (!mounted) {
+      // 如果 Widget 已经不在树中，直接返回，不做任何操作
+      return;
+    }
+    Utils.showMessage(context, '电费已刷新！金额: ${feeProvider.currentFee} 元，采集时间: ${DateFormat('yyyy-MM-dd HH:mm').format(feeProvider.lastUpdated)}');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final feeProvider = widget.feeProvider;
     return Container(
       padding: const EdgeInsets.all(32.0),
       decoration: BoxDecoration(
@@ -102,12 +178,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Text(
-            '¥ ${feeProvider.currentFee.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 64,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+          FittedBox(
+            fit: BoxFit.scaleDown, // 缩放模式，通常用 scaleDown
+            child: Text(
+              '¥ ${feeProvider.currentFee.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontSize: 64,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -124,62 +203,6 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
       ),
-    );
-  }
-
-  Widget _buildPaymentButtons() {
-    final feeProvider = context.watch<FeeProvider>();
-
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            icon: SvgPicture.asset('assets/icons/wechat_pay.svg', height: 24),
-            label: const Text('微信缴费', style: TextStyle(fontSize: 16)),
-            onPressed: () async {
-              await feeProvider.chargeFee(url: FeeProvider.feeUrl, type: PayType.wechatpay, amount: 1);
-            },
-            style: _paymentButtonStyle(const Color(0xFF07C160)),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton.icon(
-            icon: SvgPicture.asset('assets/icons/alipay.svg', height: 24),
-            label: const Text('支付宝缴费', style: TextStyle(fontSize: 16)),
-            onPressed: () async{ 
-              final newAmount = await showDialog<double>(
-                context: context,
-                builder: (BuildContext context) {
-                  // 使用通用的 AmountInputDialog
-                  return AmountInputDialog(
-                    title: '请输入需要充值的电费', // 传入自定义标题
-                    initialAmount: 0,
-                  );
-                },
-              );
-
-              if(newAmount == null || newAmount <= 0){
-                return;
-              }
-              await feeProvider.chargeFee(url: FeeProvider.feeUrl, type: PayType.alipay, amount: newAmount);
-            },
-            style: _paymentButtonStyle(const Color(0xFF00A1FF)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  ButtonStyle _paymentButtonStyle(Color backgroundColor) {
-    return ElevatedButton.styleFrom(
-      backgroundColor: backgroundColor,
-      foregroundColor: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      elevation: 2,
     );
   }
 }
