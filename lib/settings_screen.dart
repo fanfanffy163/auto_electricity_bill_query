@@ -79,8 +79,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         children: [
           _buildNotificationRule(),
-          const Divider(height: 32),
+          const Divider(height: 16),
           _buildRefreshIntervalRule(),
+          const Divider(height: 16),
         ],
       ),
     );

@@ -10,11 +10,11 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  bool _isInit = false;
+  bool _isGranted = false;
   FlutterLocalNotificationsPlugin get _notificationsPlugin => FlutterLocalNotificationsPlugin();
 
-  Future<void> init({bool isHeadless = false}) async {
-    if (_isInit) return; // 如果已经初始化，则直接返回
+  Future<bool> init({bool isHeadless = false}) async {
+    if (_isGranted) return _isGranted; // 如果已经初始化，则直接返回
 
     // Android 13+ 主动申请通知权限
     if (!isHeadless && defaultTargetPlatform == TargetPlatform.android) {
@@ -62,14 +62,13 @@ class NotificationService {
     .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>()
     ?.areNotificationsEnabled();
-    if (isGranted == true) {
+    if (isGranted != null && isGranted == true) {
+      _isGranted = isGranted;
       debugPrint("[NotificationService] 通知权限已授予");
     } else {
       debugPrint("[NotificationService] 通知权限未授予");
     }
-
-    _isInit = true;
-    debugPrint("[NotificationService] 初始化完成");
+    return _isGranted;
   }
 
   Future<void> showNotification(String title, String body) async {
@@ -81,6 +80,7 @@ class NotificationService {
       importance: Importance.defaultImportance,
       priority: Priority.defaultPriority,
       ticker: 'ticker',
+      onlyAlertOnce: true,
     );
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);

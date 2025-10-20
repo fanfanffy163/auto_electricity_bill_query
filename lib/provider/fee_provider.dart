@@ -2,8 +2,11 @@
 import 'package:auto_electricity_bill_query/eb_grab/eb_graber.dart';
 import 'package:auto_electricity_bill_query/eb_grab/jjmzry_http_eb_graber.dart';
 import 'package:auto_electricity_bill_query/exception/app_exception.dart';
+import 'package:auto_electricity_bill_query/service/notification_service.dart';
 import 'package:auto_electricity_bill_query/utils/cache.dart';
+import 'package:auto_electricity_bill_query/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class FeeProvider with ChangeNotifier {
   double _currentFee = 0.0;
@@ -42,7 +45,7 @@ class FeeProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      EbData c = await fetchFeeFromUrl(url);
+      EbData c = await _fetchFeeFromUrl(url);
       updateFee(fee: c.fee, updateTime: c.updateTime);
       return true;
     } catch (e) {
@@ -67,12 +70,38 @@ class FeeProvider with ChangeNotifier {
     }
   }
 
-  static Future<EbData> fetchFeeFromUrl(String url) async {
+  static Future<EbData> _fetchFeeFromUrl(String url) async {
     EbData? c = await graber.grab(url);
     // 假设抓取到的电费数据
     if (c == null) {
       throw AppException('获取电费失败，请检查链接或网络连接');
     }
     return c;
+  }
+
+
+  static Future<void> execRefreshElectricityBill(String taskId) async {
+    await CacheUtil.init(); // 确保缓存工具类已初始化
+    // 调用我们封装好的静态方法来执行业务逻辑
+    try{
+      final fee = FeeProvider.notificationThreshold;
+      if (feeUrl.isEmpty) {
+        throw AppException("缴费链接为空，无法刷新电费");
+      }
+      final bill = await _fetchFeeFromUrl(feeUrl);
+      debugPrint("电费刷新成功 (from BackgroundTaskService): $bill");
+      if(bill.fee <= fee){
+        final lastUpdated = bill.updateTime;
+        final formattedTime = DateFormat('yyyy-MM-dd HH:mm').format(lastUpdated);
+        await NotificationService().init(isHeadless: true); // 推荐这里手动调用
+        await NotificationService().showNotification(
+          '电费即将耗尽',
+          '当前最新电费为: ${bill.fee} 元，最后更新时间为: $formattedTime',
+        );
+      }
+    }catch (e) {
+      await Utils.writeLog("Error in headless task: $e");
+      rethrow;
+    }
   }
 }

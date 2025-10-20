@@ -1,17 +1,30 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Utils{
-  static void showMessage(BuildContext? context, String message){
+  static void showMessage(BuildContext? context, String message, {int? seconds, SnackBarAction? action}){
     if(context == null){
       return;
     }
 
+    seconds ??= min(5, max(2, (message.length / 10).toInt()));
+
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          duration: Duration(seconds: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          elevation: 6, // 阴影增强悬浮感
+          action: action,
+          duration: Duration(seconds: seconds),
+          behavior: SnackBarBehavior.floating, // 悬浮模式
+          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       );
   }
@@ -58,5 +71,26 @@ class Utils{
     final timeStr = now.toIso8601String();
     final file = File('${dir.path}/AppLog_$dateStr.log');
     await file.writeAsString('[$timeStr] $message\n', mode: FileMode.append, flush: true);
+  }
+
+
+  /// 时间戳转DateTime（支持毫秒/秒级时间戳）
+  static DateTime timestampToDateTime(int timestamp) {
+    // 判断是毫秒级（13位）还是秒级（10位）
+    if (timestamp.toString().length == 13) {
+      return DateTime.fromMillisecondsSinceEpoch(timestamp); // 毫秒级
+    } else {
+      return DateTime.fromMillisecondsSinceEpoch(timestamp * 1000); // 秒级
+    }
+  }
+
+  static Future<bool> jumpUrl(String url) async{
+    // 检查是否可以打开链接
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      return true;
+    } else {
+      return false;
+    }
   }
 }

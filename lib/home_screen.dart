@@ -1,6 +1,8 @@
 import 'package:auto_electricity_bill_query/dialog/amount_input.dart';
+import 'package:auto_electricity_bill_query/dialog/info.dart';
 import 'package:auto_electricity_bill_query/eb_grab/eb_graber.dart';
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
+import 'package:auto_electricity_bill_query/service/foreground_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart'; // 需要添加 intl 包来格式化时间
@@ -15,6 +17,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _taskType = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,23 +26,57 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('电费小助手'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.help),
+            onPressed: () {
+              InfoDialog("应用信息").show(context);
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () {
               Navigator.pushNamed(context, '/settings');
             },
-          ),
+          ),     
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-        child: Column(
-          children: [
-            _buildFeeDisplayCard(),
-            const SizedBox(height: 40),
-            _buildPaymentButtons(),
-          ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            children: [
+              _buildFeeDisplayCard(),
+              const SizedBox(height: 40),
+              _buildPaymentButtons(),
+            ],
+          ),
         ),
       ),
+      floatingActionButton: _buildStartBtn(),
+      floatingActionButtonLocation : FloatingActionButtonLocation.centerFloat
+    );
+  }
+
+  Widget _buildStartBtn(){
+    return FloatingActionButton.extended(
+      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+      onPressed: () {
+        int tmp = 0;
+        if(_taskType == 0){
+          ForegroundService.run((){
+            if(!mounted) return null;
+            return context;
+          });
+          tmp = 1;
+        }else{
+          ForegroundService.stop();
+          tmp = 0;
+        }
+        setState(() {
+          _taskType = tmp;
+        });
+      },
+      icon: _taskType == 0 ? Icon(Icons.play_arrow) : Icon(Icons.stop),
+      label: _taskType == 0 ? const Text('开启监控') : const Text('终止监控'),
     );
   }
 
@@ -59,9 +97,9 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: SvgPicture.asset('assets/icons/wechat_pay.svg', height: 24),
             label: const Text('微信缴费', style: TextStyle(fontSize: 16)),
             onPressed: () async {
-              await FeeProvider.chargeFee(url: FeeProvider.feeUrl, type: PayType.wechatpay, amount: 1);
+              Utils.showMessage(context, "由于平台安全规则，此app内微信缴费无法实现，请前往微信app进行缴费或使用支付宝");
             },
-            style: _paymentButtonStyle(const Color(0xFF07C160)),
+            style: _paymentButtonStyle(const Color.fromARGB(255, 168, 176, 172)),
           ),
         ),
         const SizedBox(width: 16),

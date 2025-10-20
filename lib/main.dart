@@ -74,7 +74,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: navigatorKey, // 🌟 关键改动在这里
+      navigatorKey: navigatorKey,
       title: '电费监控',
       theme: ThemeData(
         primarySwatch: Colors.blue,

@@ -35,14 +35,14 @@ class _AmountInputDialogState extends State<AmountInputDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       // 添加圆角和阴影
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
       elevation: 10.0,
       
       // 标题
       title: Text(
         widget.title,
         style: const TextStyle(
-          fontSize: 22,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -55,26 +55,32 @@ class _AmountInputDialogState extends State<AmountInputDialog> {
           hintText: widget.hintText,
           // 添加边框
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: BorderRadius.circular(4.0),
           ),
           // 选中时的边框颜色
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
             borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2.0),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
         ),
       ),
 
       // 按钮
       actions: <Widget>[
-        TextButton(
+        ElevatedButton(
           onPressed: () {
             Navigator.of(context).pop();
           },
+          style: ElevatedButton.styleFrom(
+            backgroundColor:Color.fromARGB(255, 182, 180, 180),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4.0),
+            ),
+          ),
           child: const Text(
             '取消',
-            style: TextStyle(color: Colors.grey, fontSize: 16),
+            style: TextStyle(color: Colors.white, fontSize: 14),
           ),
         ),
         ElevatedButton(
@@ -93,12 +99,12 @@ class _AmountInputDialogState extends State<AmountInputDialog> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Theme.of(context).primaryColor,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(4.0),
             ),
           ),
           child: const Text(
             '确定',
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: TextStyle(color: Colors.white, fontSize: 14),
           ),
         ),
       ],
