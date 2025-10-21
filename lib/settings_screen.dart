@@ -1,6 +1,8 @@
+import 'package:auto_electricity_bill_query/const.dart';
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
 import 'package:auto_electricity_bill_query/service/background_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_intro/flutter_intro.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -66,24 +68,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildLinkInput() {
-    return FeeLink(linkController: _linkController);
+    return IntroStepBuilder(
+      group: Constants.introGroupSetting,
+      order: 1,
+      onWidgetLoad: (){
+        final firstOpen = CacheUtil.getBool(Configs.appFirstOpenSetting) ?? true;
+        if(firstOpen){
+          CacheUtil.setBool(Configs.appFirstOpenSetting, false);
+          Intro.of(context).start(group: Constants.introGroupSetting);
+        }
+      },
+      text: "1. 扫描或识别自如给的图片二维码，绑定电表",
+      builder:(BuildContext context, GlobalKey key) { return FeeLink(key: key, linkController: _linkController); }
+    );
   }
 
   Widget _buildRuleSettingsCard() {
-    return Container(
-      padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      child: Column(
-        children: [
-          _buildNotificationRule(),
-          const Divider(height: 16),
-          _buildRefreshIntervalRule(),
-          const Divider(height: 16),
-        ],
-      ),
+    return IntroStepBuilder(
+      group: Constants.introGroupSetting,
+      order: 2,
+      text: "2. 设置监控规则",
+      builder:(BuildContext context, GlobalKey key) { 
+        return Container(
+          key: key,
+          padding: const EdgeInsets.all(20.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: Column(
+            children: [
+              _buildNotificationRule(),
+              const Divider(height: 16),
+              _buildRefreshIntervalRule(),
+              const Divider(height: 16),
+            ],
+          )
+        );
+      }
     );
   }
 

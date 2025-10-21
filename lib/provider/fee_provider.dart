@@ -1,9 +1,11 @@
 // lib/providers/fee_provider.dart
+import 'package:auto_electricity_bill_query/const.dart';
 import 'package:auto_electricity_bill_query/eb_grab/eb_graber.dart';
 import 'package:auto_electricity_bill_query/eb_grab/jjmzry_http_eb_graber.dart';
 import 'package:auto_electricity_bill_query/exception/app_exception.dart';
 import 'package:auto_electricity_bill_query/service/notification_service.dart';
 import 'package:auto_electricity_bill_query/utils/cache.dart';
+import 'package:auto_electricity_bill_query/utils/logger.dart';
 import 'package:auto_electricity_bill_query/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -12,25 +14,22 @@ class FeeProvider with ChangeNotifier {
   double _currentFee = 0.0;
   DateTime _lastUpdated = DateTime.now();
   bool _isLoading = false;
-  static final String _linkCacheKey = "eb_get_link";
-  static final String _notifyThresholdCacheKey = "eb_notify_threshold";
-  static final String _refreshIntervalCacheKey = "eb_refresh_interval";
   static final double _defaultNotificationThreshold = 5.0;
   static final int _defaultRefreshInterval = 2;
 
   double get currentFee => _currentFee;
   DateTime get lastUpdated => _lastUpdated;
   bool get isLoading => _isLoading;
-  static String get linkCacheKey => _linkCacheKey;
-  static String get notifyThresholdCacheKey => _notifyThresholdCacheKey;
-  static String get refreshIntervalCacheKey => _refreshIntervalCacheKey;
+  static String get linkCacheKey => Configs.ebGetLink;
+  static String get notifyThresholdCacheKey => Configs.ebNotifyThreshold;
+  static String get refreshIntervalCacheKey => Configs.ebRefreshInterval;
   static double get defaultNotificationThreshold => _defaultNotificationThreshold;
   static int get defaultRefreshInterval => _defaultRefreshInterval;
   
   //获取配置信息
-  static double get notificationThreshold => CacheUtil.getDouble(_notifyThresholdCacheKey) ?? _defaultNotificationThreshold;
-  static int get refreshInterval => CacheUtil.getInt(_refreshIntervalCacheKey) ?? _defaultRefreshInterval;
-  static String get feeUrl => CacheUtil.getString(_linkCacheKey) ?? "";
+  static double get notificationThreshold => CacheUtil.getDouble(Configs.ebNotifyThreshold) ?? _defaultNotificationThreshold;
+  static int get refreshInterval => CacheUtil.getInt(Configs.ebRefreshInterval) ?? _defaultRefreshInterval;
+  static String get feeUrl => CacheUtil.getString(Configs.ebGetLink) ?? "";
 
   static final AbstractEbGraber graber = JjmzryHttpEbGraber();
 
@@ -89,7 +88,7 @@ class FeeProvider with ChangeNotifier {
         throw AppException("缴费链接为空，无法刷新电费");
       }
       final bill = await _fetchFeeFromUrl(feeUrl);
-      debugPrint("电费刷新成功 (from BackgroundTaskService): $bill");
+      logger.i("电费刷新成功 (from BackgroundTaskService): $bill");
       if(bill.fee <= fee){
         final lastUpdated = bill.updateTime;
         final formattedTime = DateFormat('yyyy-MM-dd HH:mm').format(lastUpdated);

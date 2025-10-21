@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:auto_electricity_bill_query/utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -13,6 +14,7 @@ class Utils{
 
     seconds ??= min(5, max(2, (message.length / 10).toInt()));
 
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -63,7 +65,7 @@ class Utils{
   static Future<void> writeLog(String message) async {
     final dir = await getExternalStorageDirectory();
     if(dir == null) {
-      debugPrint("无法获取外部存储目录");
+      logger.i("无法获取外部存储目录");
       return;
     }
     final now = DateTime.now();

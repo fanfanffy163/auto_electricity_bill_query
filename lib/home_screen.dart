@@ -1,9 +1,12 @@
+import 'package:auto_electricity_bill_query/const.dart';
 import 'package:auto_electricity_bill_query/dialog/amount_input.dart';
 import 'package:auto_electricity_bill_query/dialog/info.dart';
 import 'package:auto_electricity_bill_query/eb_grab/eb_graber.dart';
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
 import 'package:auto_electricity_bill_query/service/foreground_service.dart';
+import 'package:auto_electricity_bill_query/utils/cache.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_intro/flutter_intro.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart'; // 需要添加 intl 包来格式化时间
 import 'package:provider/provider.dart';
@@ -17,7 +20,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _taskType = 0;
+  late Future<bool> _taskType;
+
+  @override
+  void initState() {
+    super.initState();
+    _taskType = ForegroundService.isRunning();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,16 +34,37 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('电费小助手'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.help),
-            onPressed: () {
-              InfoDialog("应用信息").show(context);
-            },
+          IntroStepBuilder(
+            order: 3,
+            text: '3. 点此查看使用说明',
+            builder: (BuildContext context, GlobalKey key) {
+              return IconButton(
+                key: key,
+                icon: const Icon(Icons.help),
+                onPressed: () {
+                  InfoDialog("应用信息").show(context);
+                },
+              );
+            }
           ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
+          IntroStepBuilder(
+            onWidgetLoad: () {
+              final firstOpen = CacheUtil.getBool(Configs.appFirstOpenHome) ?? true;
+              if(firstOpen){
+                CacheUtil.setBool(Configs.appFirstOpenHome, false);
+                Intro.of(context).start();               
+              }
+            },
+            order: 1,
+            text: '1. 设置缴费链接和提醒规则',
+            builder: (BuildContext context, GlobalKey key) {
+              return IconButton(
+                key: key,
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/settings');
+                },
+              );
             },
           ),     
         ],
@@ -57,26 +87,40 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStartBtn(){
-    return FloatingActionButton.extended(
-      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      onPressed: () {
-        int tmp = 0;
-        if(_taskType == 0){
-          ForegroundService.run((){
-            if(!mounted) return null;
-            return context;
-          });
-          tmp = 1;
-        }else{
-          ForegroundService.stop();
-          tmp = 0;
+    return IntroStepBuilder(
+        order: 2,
+        text: '2. 启动前台任务进行监控电费，低于设定阈值将会通知提醒',
+        builder: (BuildContext context, GlobalKey key){ 
+          return FutureBuilder(
+            key: key,
+            future: _taskType,
+            builder: (context, snapshot) {
+              return FloatingActionButton.extended(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                onPressed: () async{
+                  bool tmp = false;
+                  if(snapshot.hasData && snapshot.data!){
+                    await ForegroundService.stop();
+                    tmp = false;
+                  }else{
+                    await ForegroundService.run((){
+                      if(!mounted) return null;
+                      return context;
+                    });
+                    tmp = true;
+                  }
+
+                  if(!mounted) return;
+                  setState(() {
+                    _taskType = Future.value(tmp);
+                  });
+                },
+                icon: snapshot.hasData && snapshot.data! ? Icon(Icons.stop) : Icon(Icons.play_arrow),
+                label: snapshot.hasData && snapshot.data! ? const Text('终止监控') : const Text('开启监控'),
+              );
+            }
+          );
         }
-        setState(() {
-          _taskType = tmp;
-        });
-      },
-      icon: _taskType == 0 ? Icon(Icons.play_arrow) : Icon(Icons.stop),
-      label: _taskType == 0 ? const Text('开启监控') : const Text('终止监控'),
     );
   }
 
@@ -191,7 +235,7 @@ class _FeeDisplayerState extends State<FeeDisplayer> {
         borderRadius: BorderRadius.circular(20.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha(26),
             spreadRadius: 5,
             blurRadius: 15,
             offset: const Offset(0, 5),

@@ -5,6 +5,8 @@ import 'package:auto_electricity_bill_query/exception/app_exception.dart';
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
 import 'package:auto_electricity_bill_query/service/background_service.dart';
 import 'package:auto_electricity_bill_query/service/notification_service.dart';
+import 'package:auto_electricity_bill_query/utils/app_info.dart';
+import 'package:auto_electricity_bill_query/utils/logger.dart';
 import 'package:auto_electricity_bill_query/utils/utils.dart';
 import 'package:background_fetch/background_fetch.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +14,7 @@ import 'package:provider/provider.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart';
 import 'utils/cache.dart';
+import 'package:flutter_intro/flutter_intro.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -26,11 +29,12 @@ void main() async{
     NotificationService().init(); // 推荐这里手动调用
     BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
     await CacheUtil.init(); // 在这里进行初始化
+    await AppInfo.init();
 
     runApp(
       ChangeNotifierProvider(
         create: (_) => FeeProvider(),
-        child: MyApp(),
+        child: const MyApp(),
       ),
     );
   }, (error, stack) {
@@ -47,7 +51,7 @@ void _handleError(Object error, StackTrace? stack) {
     }
   } else {
     // 其他异常可记录或上报
-    debugPrint('未处理异常: $error');
+    logger.e('未处理异常',error: error,stackTrace: stack);
     Utils.writeLog('未处理异常: $error\nStackTrace: $stack');
   }
 }
@@ -91,8 +95,8 @@ class _MyAppState extends State<MyApp> {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const HomeScreen(),
-        '/settings': (context) => const SettingsScreen(),
+        '/': (context) => Intro(child: const HomeScreen()),
+        '/settings': (context) => Intro(child: const SettingsScreen()),
         '/scanQrCode': (context) => const QRCodeScanScreen(),
       },
     );

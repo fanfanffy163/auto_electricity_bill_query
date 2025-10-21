@@ -2,12 +2,17 @@ import 'dart:io';
 
 import 'package:auto_electricity_bill_query/exception/app_exception.dart';
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
+import 'package:auto_electricity_bill_query/utils/logger.dart';
 import 'package:auto_electricity_bill_query/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ForegroundService {
+  static Future<bool> isRunning() async{
+    return await FlutterForegroundTask.isRunningService;
+  }
+
   static Future<bool> run(Function ctxGeter) async{
     if(await FlutterForegroundTask.isRunningService){
       return false;
@@ -114,7 +119,7 @@ class ForegroundService {
     try{
       await FeeProvider.execRefreshElectricityBill(taskId.toString());
     }catch(e){
-      debugPrint("foreground fetch fee error $e");
+      logger.e("foreground fetch fee error ",error: e);
     }
   }
 }
@@ -128,27 +133,32 @@ void startCallback() {
 class FeeTaskHandler extends TaskHandler {
   static const String feeRefresh = 'feeRefresh';
 
-  void _feeRefresh() async{
-    await FeeProvider.execRefreshElectricityBill(feeRefresh);
-  }
-
-  // Called when the task is started.
-  @override
-  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
-  }
-
-  // Called based on the eventAction set in ForegroundTaskOptions.
-  @override
-  void onRepeatEvent(DateTime timestamp) {
+  void _watchFee(DateTime timestamp){
     timestamp = timestamp.toLocal();
     final hour = timestamp.hour;
     //8点之前 22点之后就不要提醒了
     if(hour < 8 || hour > 22){
       return;
-    }
-    debugPrint("foreground task refresh fee start");
-    _feeRefresh();
-    debugPrint("foreground task refresh fee end");
+    }    
+    _feeRefresh();   
+  }
+
+  void _feeRefresh() async{
+    logger.i("foreground task refresh fee start");
+    await FeeProvider.execRefreshElectricityBill(feeRefresh);
+    logger.i("foreground task refresh fee end");
+  }
+
+  // Called when the task is started.
+  @override
+  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
+    _watchFee(timestamp);
+  }
+
+  // Called based on the eventAction set in ForegroundTaskOptions.
+  @override
+  void onRepeatEvent(DateTime timestamp) {
+    _watchFee(timestamp);
   }
 
   // Called when the task is destroyed.
@@ -164,19 +174,19 @@ class FeeTaskHandler extends TaskHandler {
   // Called when the notification button is pressed.
   @override
   void onNotificationButtonPressed(String id) {
-    print('onNotificationButtonPressed: $id');
+    logger.i('onNotificationButtonPressed: $id');
   }
 
   // Called when the notification itself is pressed.
   @override
   void onNotificationPressed() {
-    print('onNotificationPressed');
+    logger.i('onNotificationPressed');
   }
 
   // Called when the notification itself is dismissed.
   @override
   void onNotificationDismissed() {
-    print('onNotificationDismissed');
+    logger.i('onNotificationDismissed');
   }
 }
 

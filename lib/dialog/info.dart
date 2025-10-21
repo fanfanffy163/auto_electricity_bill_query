@@ -1,4 +1,5 @@
 import 'package:auto_electricity_bill_query/const.dart';
+import 'package:auto_electricity_bill_query/utils/app_info.dart';
 import 'package:auto_electricity_bill_query/utils/utils.dart';
 import 'package:flutter/material.dart';
 
@@ -30,7 +31,7 @@ class InfoDialog extends StatelessWidget {
       content: Container(
           constraints: BoxConstraints(maxHeight: 230, maxWidth: 500),
           child: SingleChildScrollView(
-              child: Column(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -57,7 +58,7 @@ class InfoDialog extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(text: "版本:  ", style: theme.textTheme.bodySmall),
-                    TextSpan(text: Constants.totalVersion, style: theme.textTheme.labelMedium),
+                    TextSpan(text: AppInfo.getAppVersion(), style: theme.textTheme.labelMedium),
                   ],
                 ),
               ),

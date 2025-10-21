@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:auto_electricity_bill_query/eb_grab/eb_graber.dart';
 import 'package:auto_electricity_bill_query/exception/app_exception.dart';
+import 'package:auto_electricity_bill_query/utils/logger.dart';
 import 'package:auto_electricity_bill_query/utils/utils.dart';
-import 'package:flutter/rendering.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -113,7 +113,7 @@ class JjmzryHttpEbGraber extends AbstractEbGraber{
   //       'Cookie': cookie
   //     }
   //   );
-  //   debugPrint('微信支付响应: ${response.body}');
+  //   logger.i('微信支付响应: ${response.body}');
 
   //   // 解析JSON
   //   Map<String, dynamic> info = json.decode(response.body);
@@ -153,7 +153,7 @@ class JjmzryHttpEbGraber extends AbstractEbGraber{
         'Cookie': cookie
       }
     );
-    debugPrint('支付宝支付响应: ${response.body}');
+    logger.i('支付宝支付响应: ${response.body}');
 
     // 解析JSON
     Map<String, dynamic> info = json.decode(response.body);
@@ -187,13 +187,13 @@ class JjmzryHttpEbGraber extends AbstractEbGraber{
       // 1. 解析并验证URL
       final uri = Uri.parse(url);
       if (!uri.isAbsolute) {
-        debugPrint('无效的URL格式: $url');
+        logger.i('无效的URL格式: $url');
         return false;
       }
 
       // 2. 检查是否可以打开该URL
       if (!await canLaunchUrl(uri)) {
-        debugPrint('没有应用可处理该URL: $url');
+        logger.i('没有应用可处理该URL: $url');
         return false;
       }
 
@@ -205,8 +205,8 @@ class JjmzryHttpEbGraber extends AbstractEbGraber{
         // 可选：添加标题（部分系统会在选择器中显示）
         webOnlyWindowName: '打开链接',
       );
-    } catch (e) {
-      debugPrint('打开链接失败: $e');
+    } catch (e,stackTrace) {
+      logger.e('打开链接失败',error: e,stackTrace: stackTrace);
       return false;
     }
   }

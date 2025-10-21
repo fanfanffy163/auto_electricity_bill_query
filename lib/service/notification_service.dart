@@ -1,5 +1,6 @@
 // lib/services/notification_service.dart
 
+import 'package:auto_electricity_bill_query/utils/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -19,7 +20,7 @@ class NotificationService {
     // Android 13+ 主动申请通知权限
     if (!isHeadless && defaultTargetPlatform == TargetPlatform.android) {
       final status = await Permission.notification.request();
-      debugPrint('通知权限状态: $status');
+      logger.i('通知权限状态: $status');
     }
 
     // Android 初始化设置
@@ -64,9 +65,9 @@ class NotificationService {
     ?.areNotificationsEnabled();
     if (isGranted != null && isGranted == true) {
       _isGranted = isGranted;
-      debugPrint("[NotificationService] 通知权限已授予");
+      logger.i("[NotificationService] 通知权限已授予");
     } else {
-      debugPrint("[NotificationService] 通知权限未授予");
+      logger.i("[NotificationService] 通知权限未授予");
     }
     return _isGranted;
   }
@@ -91,6 +92,6 @@ class NotificationService {
       body,
       platformChannelSpecifics,
     );
-    debugPrint ("[NotificationService] 显示通知: $title - $body");
+    logger.i ("[NotificationService] 显示通知: $title - $body");
   }
 }
