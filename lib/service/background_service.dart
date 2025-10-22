@@ -1,5 +1,6 @@
 // lib/services/background_service.dart
 import 'package:auto_electricity_bill_query/provider/fee_provider.dart';
+import 'package:auto_electricity_bill_query/service/foreground_service.dart';
 import 'package:auto_electricity_bill_query/utils/logger.dart';
 import 'package:auto_electricity_bill_query/utils/utils.dart';
 import 'package:background_fetch/background_fetch.dart';
@@ -24,7 +25,7 @@ class BackgroundTaskService {
     // 配置 BackgroundFetch
     await BackgroundFetch.configure(
       BackgroundFetchConfig(
-        minimumFetchInterval: 15,//FeeProvider.refreshInterval * 60, // 这里使用配置的刷新间隔
+        minimumFetchInterval: FeeProvider.refreshInterval * 60, // 这里使用配置的刷新间隔
         stopOnTerminate: false,
         enableHeadless: true,
         requiresBatteryNotLow: false,
@@ -47,6 +48,9 @@ class BackgroundTaskService {
 // 这个 headless task 入口函数仍然需要是顶级的
 @pragma('vm:entry-point')
 void backgroundFetchHeadlessTask(HeadlessTask task) async {
+  if(await ForegroundService.isRunning()){
+    return;
+  }
   await Utils.writeLog("Headless task started: ${task.taskId} at ${DateTime.now().toIso8601String()}");
   String taskId = task.taskId;
   if (task.timeout) {

@@ -1,5 +1,6 @@
 # auto_electricity_bill_query
 
+English | [中文](README_CN.md)
 A Flutter app for automatic TQDianBiao electricity bill query and monitoring, currently available only for the Android platform.
 
 ## Quick Start
