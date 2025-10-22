@@ -4,7 +4,7 @@
 
 ## 快速开始
 ```cmd
-flutter pub get
+flutter pub get --no-example
 flutter run --debug -d your_device_id
 ```
 
