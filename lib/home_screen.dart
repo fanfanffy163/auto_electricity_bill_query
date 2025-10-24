@@ -103,11 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     await ForegroundService.stop();
                     tmp = false;
                   }else{
-                    await ForegroundService.run((){
+                    tmp = await ForegroundService.run((){
                       if(!mounted) return null;
                       return context;
                     });
-                    tmp = true;
                   }
 
                   if(!mounted) return;

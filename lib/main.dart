@@ -10,6 +10,7 @@ import 'package:auto_electricity_bill_query/utils/logger.dart';
 import 'package:auto_electricity_bill_query/utils/utils.dart';
 import 'package:background_fetch/background_fetch.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:provider/provider.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart';
@@ -28,6 +29,7 @@ void main() async{
     WidgetsFlutterBinding.ensureInitialized();
     NotificationService().init(); // 推荐这里手动调用
     BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
+    FlutterForegroundTask.initCommunicationPort();
     await CacheUtil.init(); // 在这里进行初始化
     await AppInfo.init();
 

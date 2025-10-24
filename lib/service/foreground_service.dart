@@ -25,6 +25,7 @@ class ForegroundService {
     }catch(e){
       if(e is AppException){
         Utils.showMessage(ctxGeter(),e.message,seconds: 5,action: SnackBarAction(label: "去设置", onPressed: openAppSettings));
+        return false;
       }else{
         rethrow;
       }
@@ -65,6 +66,10 @@ class ForegroundService {
         await FlutterForegroundTask.requestIgnoreBatteryOptimization();
       }
 
+      if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations){
+        throw AppException('未授予电池优化豁免权限，监控可能在低电量时被终止');
+      }
+
       // // Use this utility only if you provide services that require long-term survival,
       // // such as exact alarm service, healthcare service, or Bluetooth communication.
       // //
@@ -85,7 +90,7 @@ class ForegroundService {
           channelId: 'foreground_service_channel',
           channelName: 'Foreground Service',
           channelDescription: '保持应用在前台运行',
-          channelImportance: NotificationChannelImportance.DEFAULT,
+          channelImportance: NotificationChannelImportance.HIGH,
           priority: NotificationPriority.DEFAULT,
           showWhen : true,
           showBadge : true,
@@ -95,7 +100,9 @@ class ForegroundService {
           playSound: false,
         ),
         foregroundTaskOptions: ForegroundTaskOptions(
-          eventAction: ForegroundTaskEventAction.repeat(10 * 60 * 1000)
+          autoRunOnBoot:true,
+          autoRunOnMyPackageReplaced : true,
+          eventAction: ForegroundTaskEventAction.repeat(20 * 60 * 1000)
         )
       );  
   }
@@ -140,7 +147,7 @@ class FeeTaskHandler extends TaskHandler {
     if(hour < 8 || hour > 22){
       return;
     }    
-    _feeRefresh();   
+    _feeRefresh();
   }
 
   void _feeRefresh() async{
@@ -164,6 +171,7 @@ class FeeTaskHandler extends TaskHandler {
   // Called when the task is destroyed.
   @override
   Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
+    Utils.writeLog("foreground task stop! timestamp : ${timestamp.toLocal()} , isTimeout : $isTimeout");
   }
 
   // Called when data is sent using `FlutterForegroundTask.sendDataToTask`.
